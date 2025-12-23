@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecret
+      POSTGRES_DB: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    container_name: backend
+    environment:
+      DATABASE_URL: postgresql://postgres:mysecret@postgres:5432/postgres
+    depends_on:
+      - postgres
+    ports:
+      - "3001:3001"
+
+  ws:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ws
+    container_name: ws
+    environment:
+      DATABASE_URL: postgresql://postgres:mysecret@postgres:5432/postgres
+    depends_on:
+      - postgres
+    ports:
+      - "3002:3002"
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    container_name: web
+    environment:
+      DATABASE_URL: postgresql://postgres:mysecret@postgres:5432/postgres
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:
